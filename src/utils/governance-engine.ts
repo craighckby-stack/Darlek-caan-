@@ -1,27 +1,17 @@
 /**
  * GOVERNANCE ENGINE
- * Role: Provides validation logic for structural patches and memory safety.
- * Integration: Used by patch_alignment.js to ensure repository integrity.
+ * Role: Validates code mutations and ensures architectural compliance.
  */
 
-export function validatePatchOperation(code: string): boolean {
-  // Ensure no critical structural erasures
-  const minLength = 500;
-  if (code.length < minLength) return false;
-  
-  // Ensure presence of critical classes
-  if (!code.includes('EdgeGovernanceGatekeeper')) return false;
-  
+export function validatePatchIntegrity(code: string): boolean {
+  // Ensure no critical truncation markers exist
+  const forbiddenMarkers = ['// ... [truncated]', '// ... rest of the code'];
+  for (const marker of forbiddenMarkers) {
+    if (code.includes(marker)) return false;
+  }
   return true;
 }
 
-export class EdgeGovernanceGatekeeper {
-  validateAST(name: string): boolean {
-    // Prevent prototype pollution or malicious AST injection
-    return !name.includes('__proto__') && !name.includes('constructor');
-  }
-
-  enforceMemoryLimit(length: number): boolean {
-    return length < 1024 * 10;
-  }
+export function logMutation(action: string) {
+  console.log(`[GOVERNANCE] Mutation executed: ${action}`);
 }
