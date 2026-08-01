@@ -1,12 +1,14 @@
 /**
- * DIAGNOSTIC TYPE DEFINITIONS
- * Siphoned from AI_Agent_OS diagnostic_utils_core.py
+ * DIAGNOSTIC TYPES
+ * Role: Shared diagnostic interfaces siphoned from AI_Agent_OS.
  */
 
 export interface DiagnosticMetrics {
-  duration_ms: number;
-  pass_rate: number;
-  total_checks: number;
+  total: number;
+  passed: number;
+  failed: number;
+  passRate: number;
+  durationMs: number;
 }
 
 export interface DiagnosticReport {
