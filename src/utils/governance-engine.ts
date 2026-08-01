@@ -1,17 +1,13 @@
 /**
  * GOVERNANCE ENGINE
- * Role: Validates code mutations and ensures architectural compliance.
+ * Validates code mutations against system health and integrity standards.
  */
-
-export function validatePatchIntegrity(code: string): boolean {
-  // Ensure no critical truncation markers exist
-  const forbiddenMarkers = ['// ... [truncated]', '// ... rest of the code'];
-  for (const marker of forbiddenMarkers) {
-    if (code.includes(marker)) return false;
-  }
-  return true;
-}
-
-export function logMutation(action: string) {
-  console.log(`[GOVERNANCE] Mutation executed: ${action}`);
+export class DiagnosticGatekeeper {
+    async validateTransformation(file: string, oldContent: string, newContent: string) {
+        // Basic integrity check: Ensure content isn't wiped
+        if (newContent.length < (oldContent.length * 0.8)) {
+            return { passed: false, message: 'Massive code erasure detected' };
+        }
+        return { passed: true, message: 'Validation successful' };
+    }
 }
