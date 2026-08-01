@@ -1,18 +1,18 @@
 /**
  * GOVERNANCE ENGINE
- * Role: Provides diagnostic gatekeeping for repository mutations.
- * Siphoned from AI_Agent_OS diagnostic_gatekeeper.py pattern.
+ * Role: Provides diagnostic gatekeeping and telemetry for system operations.
+ * Siphoned from: AI_Agent_OS/Concept/tessera-enterprise/src/Tessera/diagnostic_gatekeeper.py
  */
 
 export class DiagnosticGatekeeper {
-    evaluate_report(report: any): boolean {
-        console.log(`[DIAGNOSTIC] Evaluating mutation: ${report.operation}`);
-        // Logic to verify if mutation is safe based on system health
-        return true;
-    }
+  logEvent(event: string, metadata: any) {
+    const timestamp = new Date().toISOString();
+    console.log(`[GOVERNANCE][${timestamp}] ${event}:`, JSON.stringify(metadata));
+  }
 
-    log_mutation(details: string) {
-        // Placeholder for persistent audit logging
-        console.log(`[AUDIT] ${new Date().toISOString()}: ${details}`);
+  evaluateReport(report: any) {
+    if (report.status === 'CRITICAL_FAILURE') {
+      throw new Error("System integrity compromised: Critical failure detected.");
     }
+  }
 }
