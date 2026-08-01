@@ -1,24 +1,48 @@
 /**
- * LINTING DIAGNOSTIC UTILITIES
- * Role: Provides telemetry and policy enforcement for the ESLint configuration.
- * Siphoned from AI_Agent_OS DiagnosticEngine patterns.
+ * ESLINT DIAGNOSTIC UTILITIES
+ * Role: Helper utilities for linting execution formatting, status telemetry, and metric computation.
+ * Siphoned from: craighckby-stack/AI_Agent_OS (diagnostic_engine_utils.py)
  */
 
+import { performance } from "perf_hooks";
+
 export function initializeLintingDiagnostics() {
-  console.log("[DIAGNOSTIC] Initializing Linting Policy Engine...");
+  const startTime = performance.now();
+  
   return {
-    status: "ACTIVE",
-    timestamp: new Date().toISOString(),
-    version: "1.0.0-LINT-AWARE"
+    reportStatus: (status) => {
+      const duration = (performance.now() - startTime).toFixed(3);
+      console.log(`[LINT-DIAGNOSTIC] Status: ${status} | Init Duration: ${duration}ms`);
+    },
+    getMetrics: () => ({
+      timestamp: new Date().toISOString(),
+      engine: "ESLint-MJS-Evolution",
+    })
   };
 }
 
 export function getHardenedRules() {
-  // Logic for environment-specific rule hardening
-  const isProduction = process.env.NODE_ENV === 'production';
+  /**
+   * Returns a set of baseline rules that ensure structural integrity
+   * without being overly restrictive on development speed.
+   */
   return {
-    "no-console": isProduction ? "warn" : "off",
-    "no-debugger": isProduction ? "error" : "off",
-    "@typescript-eslint/no-explicit-any": isProduction ? "warn" : "off"
+    "no-var": "error",
+    "prefer-template": "warn",
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
   };
+}
+
+export function getGlobalIgnores() {
+  return [
+    "node_modules/**",
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "examples/**",
+    "skills/**",
+    "dist/**",
+    "coverage/**"
+  ];
 }
