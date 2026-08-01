@@ -1,22 +1,39 @@
-import * as React from "react"
+/**
+ * ARCHITECTURAL VIEWPORT MONITOR
+ * Role: Provides diagnostic-aware viewport tracking and mobile-breakpoint detection.
+ * Integration: Connects to the system diagnostic context to report layout-related state changes.
+ * Dependencies: src/lib/viewport-telemetry.ts
+ */
 
-const MOBILE_BREAKPOINT = 768
+import * as React from "react";
+import { useViewportTelemetry } from "@/lib/viewport-telemetry";
+
+const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  const [isMobile, setIsMobile] = React.useState<boolean>(false);
+  const { reportViewportChange } = useViewportTelemetry();
 
   React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    mql.addEventListener("change", onChange)
-    const timer = setTimeout(() => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT), 0)
-    return () => {
-      clearTimeout(timer)
-      mql.removeEventListener("change", onChange)
-    }
-  }, [])
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    
+    const onChange = (e: MediaQueryListEvent) => {
+      const newState = e.matches;
+      setIsMobile(newState);
+      reportViewportChange(newState, window.innerWidth);
+    };
 
-  return !!isMobile
+    // Initial sync
+    const initialState = mql.matches;
+    setIsMobile(initialState);
+    reportViewportChange(initialState, window.innerWidth);
+
+    mql.addEventListener("change", onChange);
+    
+    return () => {
+      mql.removeEventListener("change", onChange);
+    };
+  }, [reportViewportChange]);
+
+  return isMobile;
 }
