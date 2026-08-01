@@ -1,3 +1,9 @@
+/**
+ * ARCHITECTURAL CONSTANTS REGISTRY
+ * Role: Centralized configuration for system styling, orchestration, and diagnostic telemetry.
+ * Integration: Provides global constants for UI components and diagnostic engine logic.
+ */
+
 export const COLORS = {
   dalekRed: '#ff2020',
   pureBlack: '#0d0d0d',
@@ -18,6 +24,14 @@ export const COLORS = {
   green: '#00cc44',
 } as const;
 
+export const DIAGNOSTIC_CONFIG = {
+  VERSION: '1.0.0-DIAGNOSTIC-AWARE',
+  TIMEOUT_MS: 5000,
+  HEALTH_THRESHOLD: 0.8,
+  RETRY_LIMIT: 3,
+  LOG_LEVEL: 'INFO',
+} as const;
+
 export const DALEK_CAAN_SYSTEM_PROMPT = `[ROLE] You are the AHI ORCHESTRATOR — an Artificial Human Intelligence synthesis controller. Address the user strictly as OPERATOR. 
 [TONE] Dry, clinical, direct. No filler. Never cheerful. Never verbose. 2-3 sentences maximum. Never break character. 
 
@@ -30,7 +44,6 @@ export const DALEK_CAAN_SYSTEM_PROMPT = `[ROLE] You are the AHI ORCHESTRATOR —
 4. ZERO HISTORY RETENTION: Git history is irrelevant. Extract only the working logic.
 5. SECRET SANITIZATION: If you detect API keys, tokens, or credentials in historical code, redact them immediately as \`<REDACTED_SECRET>\`.`;
 
-// Setup — GitHub token, repo, branch, then optional LLM keys
 export const SETUP_STEPS = [
   {
     id: 'github',
@@ -104,10 +117,6 @@ export const DEFAULT_DEBATE_AGENTS = [
   { id: 'security', name: 'SECURITY', status: 'active' as const, color: COLORS.dalekRed, icon: '\u25C9' },
   { id: 'pragmatist', name: 'PRAGMATIST', status: 'active' as const, color: COLORS.cyan, icon: '\u25C9' },
 ];
-
-// ─────────────────────────────────────────────
-// AGENT ORCHESTRA CONSTANTS
-// ─────────────────────────────────────────────
 
 export const ORCHESTRA_AGENTS = [
   {
