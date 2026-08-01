@@ -1,30 +1,20 @@
 /**
- * DIAGNOSTIC TYPES CORE
- * Role: Standardized interfaces for system-wide observability and health monitoring.
+ * DIAGNOSTIC TYPE DEFINITIONS
+ * Siphoned from AI_Agent_OS diagnostic_utils_core.py
  */
 
 export interface DiagnosticMetrics {
   duration_ms: number;
-  timestamp: string;
-  thread_id?: string;
+  pass_rate: number;
+  total_checks: number;
 }
 
 export interface DiagnosticReport {
   status: 'HEALTHY' | 'CRITICAL_FAILURE' | 'ERROR';
   timestamp: string;
   checks: Record<string, { passed: boolean; duration_ms: number }>;
-  summary: {
-    total: number;
-    passed: number;
-    failed: number;
-    is_healthy: boolean;
-    pass_rate: number;
-  };
+  summary: DiagnosticMetrics;
   telemetry: Record<string, any>;
 }
 
-export interface SystemDiagnosticState {
-  last_check: string;
-  health_score: number;
-  active_gatekeepers: string[];
-}
+export type SystemDiagnosticState = 'INITIALIZING' | 'READY' | 'DEGRADED' | 'FATAL';
