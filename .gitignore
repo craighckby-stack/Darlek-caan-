@@ -1,6 +1,8 @@
 # ==============================================================================
 # DALEK CAAN SUPREME CODE EVOLUTION SYSTEM - MASTER GITIGNORE
 # Optimized for Next.js, TypeScript, Bun, Python Kernels, and Autonomous Agents
+# Role: Defines the boundary between system-critical assets and ephemeral artifacts.
+# Integration: Used by the Diagnostic Engine to validate repository state integrity.
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
@@ -117,7 +119,7 @@ vector_store/
 *.sqlite
 
 # ------------------------------------------------------------------------------
-# 8. LLM CACHES, CONFIGURATIONS & RUNTIME LOGS
+# 8. LLM CACHES, CONFIGURATIONS & RUNTIME LOGS (DIAGNOSTIC-AWARE)
 # ------------------------------------------------------------------------------
 .cache/
 .langchain/
@@ -135,6 +137,9 @@ server.log
 agent.log
 refactor.log
 evolution.log
+# Diagnostic telemetry dumps
+*.diagnostic.json
+*.telemetry.log
 
 # Dynamic agent skills and generated code
 /skills/
