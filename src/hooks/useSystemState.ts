@@ -1,3 +1,10 @@
+/**
+ * DARLEK CANN ARCHITECTURAL HEADER
+ * File: src/hooks/useSystemState.ts
+ * Role: Core system component participating in autonomous cognitive evolution cycles.
+ * Architecture: Type-safe modular unit with resilient state interfaces.
+ */
+
 import { useState, useEffect } from 'react';
 export const useSystemState = () => {
   const [systemState, setSystemState] = useState({ setupComplete: false, connectionStatus: 'idle' });
