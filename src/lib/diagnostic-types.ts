@@ -1,33 +1,32 @@
 /**
- * DIAGNOSTIC TYPES & CORE UTILITIES
- * Role: Defines the structural contracts for diagnostic modules and registry management.
+ * ARCHITECTURAL DIAGNOSTIC TYPES
+ * Role: Defines the core interfaces for system-wide telemetry and health monitoring.
+ * Siphoned from: AI_Agent_OS/Concept/tessera-enterprise/src/Tessera/diagnostic_utils_core.py
  */
 
-export interface DiagnosticModule {
-  id: string;
-  check: () => Promise<number>;
+export interface DiagnosticMetadata {
+  timestamp: string;
+  thread_id: string | number;
+  version: string;
 }
 
-export class DiagnosticRegistryManager {
-  private modules: Map<string, DiagnosticModule> = new Map();
+export interface DiagnosticResult {
+  passed: boolean;
+  message: string;
+  metadata: DiagnosticMetadata;
+  duration_ms?: number;
+}
 
-  register(module: DiagnosticModule): void {
-    this.modules.set(module.id, module);
-  }
-
-  get(id: string): DiagnosticModule | undefined {
-    return this.modules.get(id);
-  }
-
-  getAll(): DiagnosticModule[] {
-    return Array.from(this.modules.values());
-  }
-
-  async runAll(): Promise<Record<string, number>> {
-    const results: Record<string, number> = {};
-    for (const [id, module] of this.modules) {
-      results[id] = await module.check();
-    }
-    return results;
-  }
+export interface SystemHealthReport {
+  status: 'HEALTHY' | 'CRITICAL_FAILURE' | 'ERROR';
+  timestamp: string;
+  checks: Record<string, { passed: boolean; duration_ms: number }>;
+  summary: {
+    total: number;
+    passed: number;
+    failed: number;
+    is_healthy: boolean;
+    pass_rate: number;
+  };
+  telemetry: DiagnosticMetadata;
 }
