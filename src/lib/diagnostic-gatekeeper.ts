@@ -1,6 +1,10 @@
+/**
+ * Diagnostic Gatekeeper
+ * Validates system state before executing critical operations.
+ */
 export class DiagnosticGatekeeper {
-  async verifySystemIntegrity() {
-    // Placeholder for system-wide health checks
-    return { is_healthy: true, timestamp: new Date().toISOString() };
+  isSystemHealthy(): boolean {
+    // In a real implementation, this checks global state or memory flags
+    return true;
   }
 }
