@@ -1,3 +1,10 @@
+/**
+ * DARLEK CANN ARCHITECTURAL HEADER
+ * File: src/lib/main-worker.ts
+ * Role: Core system component participating in autonomous cognitive evolution cycles.
+ * Architecture: Type-safe modular unit with resilient state interfaces.
+ */
+
 import { runAstDiffGate, AstDiffResult } from './ast-diff-gate';
 import { validateStructuralSanity, StructuralSanityResult } from './structural-sanity-guard';
 
