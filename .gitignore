@@ -1,6 +1,6 @@
 # ==============================================================================
 # DALEK CAAN SUPREME CODE EVOLUTION SYSTEM - MASTER GITIGNORE
-# Optimized for Next.js, TypeScript, Autonomous Agents, and Self-Refactoring Kernels
+# Optimized for Next.js, TypeScript, Bun, Python Kernels, and Autonomous Agents
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
@@ -15,7 +15,7 @@ ehthumbs.db
 Thumbs.db
 
 # ------------------------------------------------------------------------------
-# 2. NODE & PACKAGE MANAGERS (Dependencies & Lockfile Caches)
+# 2. NODE, BUN & PACKAGE MANAGERS (Dependencies & Lockfile Caches)
 # ------------------------------------------------------------------------------
 node_modules/
 /node_modules
@@ -29,6 +29,10 @@ node_modules/
 !.yarn/releases
 !.yarn/versions
 
+# Bun runtime artifacts
+bun.lockb
+.bun/
+
 # Log files
 npm-debug.log*
 yarn-debug.log*
@@ -36,7 +40,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # ------------------------------------------------------------------------------
-# 3. NEXT.JS, REACT & BUILD OUTPUTS
+# 3. NEXT.JS, REACT, TURBO & BUILD OUTPUTS
 # ------------------------------------------------------------------------------
 /.next/
 /out/
@@ -46,9 +50,29 @@ yarn-error.log*
 /bin/
 *.tsbuildinfo
 next-env.d.ts
+.turbo/
+.nx/
 
 # ------------------------------------------------------------------------------
-# 4. SECURITY, CREDENTIALS & ENVIRONMENT VARIABLES (CRITICAL LEAK PREVENTION)
+# 4. PYTHON & VIRTUAL ENVIRONMENTS (Siphoned from AI Agent OS)
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ------------------------------------------------------------------------------
+# 5. SECURITY, CREDENTIALS & ENVIRONMENT VARIABLES (CRITICAL LEAK PREVENTION)
 # ------------------------------------------------------------------------------
 .env
 .env.local
@@ -65,9 +89,10 @@ next-env.d.ts
 secrets.json
 credentials.json
 .vercel
+.capoo-key*
 
 # ------------------------------------------------------------------------------
-# 5. AUTONOMOUS AGENT WORKSPACES & SANDBOXES (Siphoned from Sovereign-Kernel)
+# 6. AUTONOMOUS AGENT WORKSPACES & SANDBOXES (Siphoned from Sovereign-Kernel)
 # ------------------------------------------------------------------------------
 # Avoid file watcher exhaustion and recursive git tracking during self-refactoring
 repo-clone/
@@ -81,7 +106,7 @@ clones/
 local-*/
 
 # ------------------------------------------------------------------------------
-# 6. VECTOR DATABASES & AI AGENT MEMORY (Siphoned from Unitary-Core)
+# 7. VECTOR DATABASES & AI AGENT MEMORY (Siphoned from Unitary-Core)
 # ------------------------------------------------------------------------------
 .chroma/
 chroma.db
@@ -92,7 +117,7 @@ vector_store/
 *.sqlite
 
 # ------------------------------------------------------------------------------
-# 7. LLM CACHES, CONFIGURATIONS & RUNTIME LOGS
+# 8. LLM CACHES, CONFIGURATIONS & RUNTIME LOGS
 # ------------------------------------------------------------------------------
 .cache/
 .langchain/
@@ -118,14 +143,19 @@ prompt/
 test/
 
 # ------------------------------------------------------------------------------
-# 8. TESTING & COVERAGE
+# 9. TESTING, COVERAGE & CONTAINERS
 # ------------------------------------------------------------------------------
 /coverage/
 .nyc_output/
 .cypress/
+.playwright/
+
+# Docker & Containerization
+.docker/
+*.tar
 
 # ------------------------------------------------------------------------------
-# 9. IDE & EDITORS
+# 10. IDE & EDITORS
 # ------------------------------------------------------------------------------
 .vscode/
 !.vscode/extensions.json
@@ -136,4 +166,3 @@ test/
 *.njsproj
 *.sln
 *.swp
-
