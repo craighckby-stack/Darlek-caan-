@@ -1,18 +1,31 @@
-import { execSync } from 'child_process';
-
 /**
  * SecurityMiddleware: Enforces OMEGA ARCHITECTURE SECURITY PROTOCOL
- * Prevents volatile state leakage into the repository.
+ * Role: Validates repository integrity and prevents volatile state leakage.
+ * Integration: Connects to SecurityDiagnosticGatekeeper for real-time telemetry reporting.
  */
-export class SecurityMiddleware {
-  private static FORBIDDEN_EXTENSIONS = ['.consciousness.dump', '.quantum.data'];
+import { SecurityDiagnosticGatekeeper } from './SecurityDiagnosticGatekeeper';
 
+export class SecurityMiddleware {
+  private static FORBIDDEN_EXTENSIONS = ['.consciousness.dump', '.quantum.data', '.env.local', '.secret'];
+
+  /**
+   * Validates staged files against security protocols and reports to diagnostic stream.
+   */
   public static validateCommit(stagedFiles: string[]): boolean {
     const violations = stagedFiles.filter(file => 
       this.FORBIDDEN_EXTENSIONS.some(ext => file.endsWith(ext))
     );
 
-    if (violations.length > 0) {
+    const isSecure = violations.length === 0;
+
+    // Report status to diagnostic gatekeeper
+    SecurityDiagnosticGatekeeper.reportSecurityEvent({
+      event: 'COMMIT_VALIDATION',
+      passed: isSecure,
+      metadata: { violationsCount: violations.length, files: violations }
+    });
+
+    if (!isSecure) {
       console.error('SECURITY_VIOLATION_CODE_0x00: Forbidden files detected:', violations);
       return false;
     }
