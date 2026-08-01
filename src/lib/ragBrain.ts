@@ -1,3 +1,10 @@
+/**
+ * DARLEK CANN ARCHITECTURAL HEADER
+ * File: src/lib/ragBrain.ts
+ * Role: Core system component participating in autonomous cognitive evolution cycles.
+ * Architecture: Type-safe modular unit with resilient state interfaces.
+ */
+
 import { collection, addDoc, getDocs, deleteDoc, doc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 
