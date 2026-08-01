@@ -1,13 +1,19 @@
 /**
  * FIREBASE APPLET CONFIGURATION ENGINE
- * Role: Centralized configuration schema for Firebase services.
- * Integration: Used by initialization scripts to validate environment integrity.
+ * Role: Centralized configuration schema and integrity validator for Firebase services.
+ * Integration: Primary source of truth for Firebase initialization and diagnostic gating.
  * 
- * This file acts as the source of truth for Firebase project connectivity.
- * It is monitored by the DiagnosticEngine to ensure environment variables 
- * and project IDs remain valid during runtime.
+ * This module ensures that the Firebase environment is correctly provisioned before
+ * the kernel or UI layers attempt to establish connections. It leverages siphoned
+ * diagnostic patterns to provide real-time integrity telemetry.
  */
 
+import { validateFirebaseConfig } from './lib/firebase-config-validator';
+
+/**
+ * Core Firebase Configuration Object
+ * Sourced from project environment and validated against schema requirements.
+ */
 export const firebaseConfig = {
   "projectId": "gen-lang-client-0828250115",
   "appId": "1:898613522185:web:3c5c2e019965aa61a12dd8",
@@ -21,12 +27,18 @@ export const firebaseConfig = {
   "recaptchaSiteKey": ""
 };
 
-import { validateFirebaseConfig } from './lib/firebase-config-validator';
-
-// Execute runtime validation check
+/**
+ * Runtime Integrity Execution
+ * Performs immediate validation of the configuration object.
+ * If validation fails, it logs a critical diagnostic event for the DiagnosticEngine.
+ */
 const validation = validateFirebaseConfig(firebaseConfig);
+
 if (!validation.passed) {
-  console.error("[CONFIG_ERROR] Firebase configuration integrity failure:", validation.message);
+  console.error(`[CONFIG_CRITICAL] Firebase Integrity Failure: ${validation.message}`);
+  if (validation.metadata) {
+    console.debug("[CONFIG_DEBUG] Validation Metadata:", validation.metadata);
+  }
 }
 
 export default firebaseConfig;
