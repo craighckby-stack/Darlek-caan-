@@ -1,4 +1,14 @@
-{
+/**
+ * FIREBASE APPLET CONFIGURATION ENGINE
+ * Role: Centralized configuration schema for Firebase services.
+ * Integration: Used by initialization scripts to validate environment integrity.
+ * 
+ * This file acts as the source of truth for Firebase project connectivity.
+ * It is monitored by the DiagnosticEngine to ensure environment variables 
+ * and project IDs remain valid during runtime.
+ */
+
+export const firebaseConfig = {
   "projectId": "gen-lang-client-0828250115",
   "appId": "1:898613522185:web:3c5c2e019965aa61a12dd8",
   "apiKey": "AIzaSyBTPwg3j0DImBmFU2a5kiUZPj5vPE8ycE0",
@@ -9,4 +19,14 @@
   "measurementId": "",
   "oAuthClientId": "898613522185-vts7oinptckdu08bdj558if3a27jf8i3.apps.googleusercontent.com",
   "recaptchaSiteKey": ""
+};
+
+import { validateFirebaseConfig } from './lib/firebase-config-validator';
+
+// Execute runtime validation check
+const validation = validateFirebaseConfig(firebaseConfig);
+if (!validation.passed) {
+  console.error("[CONFIG_ERROR] Firebase configuration integrity failure:", validation.message);
 }
+
+export default firebaseConfig;
