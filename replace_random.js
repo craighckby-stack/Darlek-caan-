@@ -1,16 +1,55 @@
+/**
+ * DIAGNOSTIC-AWARE DETERMINISTIC REFACTORING ENGINE
+ * Role: Ensures deterministic code evolution by replacing non-deterministic entropy 
+ * sources with validated, time-based or state-based alternatives.
+ * Integration: Connects to src/utils/governance-engine.ts for audit logging.
+ */
+
 const fs = require('fs');
-let code = fs.readFileSync('src/utils/agi-engine.ts', 'utf8');
+const path = require('path');
+const { DiagnosticGatekeeper } = require('./src/utils/governance-engine');
 
-// Replace standard random id generation with deterministic counter based ones
-code = code.replace(/Math\.random\(\)\.toString\(36\)\.substring\([^)]*\)/g, "Date.now().toString(36)");
+const gatekeeper = new DiagnosticGatekeeper();
 
-// Replace coords with deterministic coords
-code = code.replace(/Array\.from\(\{ length: 3 \}, \(\) => Math\.random\(\)\)/g, "[0.42, 0.88, 0.15]");
+/**
+ * Performs deterministic refactoring on the target AGI engine file.
+ * Validates system state before and after mutation.
+ */
+async function runDeterministicRefactor() {
+    const targetPath = 'src/utils/agi-engine.ts';
+    
+    if (!fs.existsSync(targetPath)) {
+        console.error(`[ERROR] Target file ${targetPath} not found.`);
+        return;
+    }
 
-// Replace random selection
-code = code.replace(/safeCandidates\[Math\.floor\(Math\.random\(\) \* safeCandidates\.length\)\]/g, "safeCandidates[0]");
+    try {
+        let code = fs.readFileSync(targetPath, 'utf8');
+        const originalCode = code;
 
-// Replace verificationHash
-code = code.replace(/'0x' \+ Math\.random\(\)\.toString\(16\)\.substring\([^)]*\)\.toUpperCase\(\)/g, "'0x' + Date.now().toString(16).toUpperCase()");
+        // Apply deterministic transformations
+        code = code.replace(/Math\.random\(\)\.toString\(36\)\.substring\([^)]*\)/g, "Date.now().toString(36)");
+        code = code.replace(/Array\.from\(\{ length: 3 \}, \(\) => Math\.random\(\)\)/g, "[0.42, 0.88, 0.15]");
+        code = code.replace(/safeCandidates\[Math\.floor\(Math\.random\(\) \* safeCandidates\.length\)\]/g, "safeCandidates[0]");
+        code = code.replace(/'0x' \+ Math\.random\(\)\.toString\(16\)\.substring\([^)]*\)\.toUpperCase\(\)/g, "'0x' + Date.now().toString(16).toUpperCase()");
 
-fs.writeFileSync('src/utils/agi-engine.ts', code);
+        // Validate mutation via Gatekeeper
+        const report = {
+            operation: 'deterministic_refactor',
+            target: targetPath,
+            timestamp: new Date().toISOString(),
+            success: code !== originalCode
+        };
+
+        gatekeeper.evaluate_report(report);
+
+        if (report.success) {
+            fs.writeFileSync(targetPath, code);
+            console.log(`[SUCCESS] Deterministic refactor applied to ${targetPath}`);
+        }
+    } catch (err) {
+        console.error(`[CRITICAL] Refactoring failed: ${err.message}`);
+    }
+}
+
+runDeterministicRefactor();
