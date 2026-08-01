@@ -72,17 +72,21 @@ io.on('connection', (socket) => {
   })
 
   socket.on('join', (data: { username: string }) => {
-    const { username } = data
+    const { username } = data || {}
+    if (!username || typeof username !== 'string') return
+
     const user: User = { id: socket.id, username }
     users.set(socket.id, user)
     
     const joinMessage = createSystemMessage(`${username} joined the chat room`)
     io.emit('user-joined', { user, message: joinMessage })
-    socket.emit('users-list', { users: Array.from(users.values()) })
+    io.emit('users-list', { users: Array.from(users.values()) })
   })
 
   socket.on('message', (data: { content: string; username: string }) => {
-    const { content, username } = data
+    const { content, username } = data || {}
+    if (!content || !username) return
+
     const user = users.get(socket.id)
     if (user && user.username === username) {
       io.emit('message', createUserMessage(username, content))
@@ -95,11 +99,12 @@ io.on('connection', (socket) => {
       users.delete(socket.id)
       const leaveMessage = createSystemMessage(`${user.username} left the chat room`)
       io.emit('user-left', { user: { id: socket.id, username: user.username }, message: leaveMessage })
+      io.emit('users-list', { users: Array.from(users.values()) })
     }
   })
 })
 
-const PORT = 3003
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3003
 httpServer.listen(PORT, () => {
   console.log(`[SYSTEM] WebSocket server running on port ${PORT}`)
 })
