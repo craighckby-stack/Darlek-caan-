@@ -17,5 +17,19 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
-  "iconLibrary": "lucide"
+  "iconLibrary": "lucide",
+  "diagnostic_manifest": {
+    "version": "1.0.0-DIAGNOSTIC-AWARE",
+    "engine_ref": "@/lib/diagnostic-engine",
+    "registry_path": "@/lib/registry",
+    "telemetry_enabled": true
+  },
+  "siphon_context": {
+    "provenance": "craighckby-stack/AI_Agent_OS",
+    "integrated_patterns": [
+      "diagnostic_engine",
+      "zero_leak_sandboxing",
+      "dynamic_consensus_weighting"
+    ]
+  }
 }
