@@ -1,38 +1,44 @@
+/**
+ * DIAGNOSTIC-AWARE REPOSITORY RESTORATION ENGINE
+ * Role: Orchestrates atomic repository restoration with integrated health telemetry.
+ * Integration: Connects to DiagnosticGatekeeper and RestorationEngine for system integrity.
+ */
+
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const { DiagnosticGatekeeper } = require('./src/lib/diagnostic_gatekeeper');
+const { RestorationEngine } = require('./src/lib/restoration_engine');
 
-const owner = 'craighckby-stack';
-const repo = 'DARLEK_CAAN_ENGINE';
-const branch = 'main';
+const CONFIG = {
+  owner: 'craighckby-stack',
+  repo: 'DARLEK_CAAN_ENGINE',
+  branch: 'main',
+  targetDir: 'src/'
+};
 
-https.get(`https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`, { headers: { 'User-Agent': 'node.js' } }, (res) => {
-  let data = '';
-  res.on('data', chunk => data += chunk);
-  res.on('end', () => {
-    const tree = JSON.parse(data).tree;
-    if (!tree) { console.error("No tree found"); return; }
+async function runRestoration() {
+  const gatekeeper = new DiagnosticGatekeeper();
+  const engine = new RestorationEngine(CONFIG);
+
+  console.log("[DIAGNOSTIC] Initiating repository restoration sequence...");
+
+  try {
+    // Pre-flight check
+    if (!gatekeeper.verifyEnvironment()) {
+      throw new Error("Environment integrity check failed before restoration.");
+    }
+
+    const report = await engine.execute();
     
-    // We only restore src/ branch because package.json might have changed
-    const srcFiles = tree.filter(f => f.type === 'blob' && f.path.startsWith('src/'));
-    console.log("Restoring " + srcFiles.length + " files from " + repo);
+    // Post-flight verification
+    gatekeeper.evaluateReport(report);
     
-    const promises = srcFiles.map(file => {
-      return new Promise(resolve => {
-        const dir = path.dirname(file.path);
-        fs.mkdirSync(dir, { recursive: true });
+    console.log("[DIAGNOSTIC] Restoration complete. Status: ", report.status);
+  } catch (error) {
+    console.error("[DIAGNOSTIC] Fatal error during restoration: ", error.message);
+    process.exit(1);
+  }
+}
 
-        https.get(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${file.path}`, { headers: { 'User-Agent': 'node.js' } }, (fileRes) => {
-           let content = '';
-           fileRes.on('data', c => content += c);
-           fileRes.on('end', () => {
-              fs.writeFileSync(file.path, content);
-              resolve();
-           });
-        }).on('error', () => resolve());
-      });
-    });
-
-    Promise.all(promises).then(() => console.log("ALL RESTORED!"));
-  });
-});
+runRestoration();
