@@ -1,6 +1,17 @@
+/**
+ * ARCHITECTURAL SYSTEM: GitHub Branch Orchestration Service
+ * Role: Fetches repository branch data with integrated diagnostic telemetry.
+ * Integration: Connects to GitHubOrchestrator for API communication and DiagnosticGatekeeper for health validation.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
+import { GitHubOrchestrator } from '@/lib/github-orchestrator';
+import { DiagnosticGatekeeper } from '@/lib/diagnostic-gatekeeper';
 
 export async function POST(req: NextRequest) {
+  const gatekeeper = new DiagnosticGatekeeper();
+  const startTime = Date.now();
+
   try {
     const body = await req.json();
     const { token, owner, repo } = body;
@@ -9,29 +20,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'token, owner, and repo are required' }, { status: 400 });
     }
 
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github.v3+json',
-      },
-    });
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      return NextResponse.json({ error: errData.message || `GitHub API returned ${res.status}` }, { status: res.status });
+    // Validate system health before external interaction
+    if (!gatekeeper.isSystemHealthy()) {
+      return NextResponse.json({ error: 'System health check failed' }, { status: 503 });
     }
 
-    const branches = await res.json();
-    const branchList = branches.map((b: { name: string; default?: boolean }) => ({
-      name: b.name,
-      default: !!b.default,
-    }));
+    const orchestrator = new GitHubOrchestrator(token);
+    const branches = await orchestrator.fetchBranches(owner, repo);
 
-    return NextResponse.json({ success: true, branches: branchList });
-  } catch (error) {
-    console.error('Branch list error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      branches,
+      telemetry: {
+        duration_ms: Date.now() - startTime,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error: any) {
+    console.error('[GitHubBranchRoute] Error:', error);
+    return NextResponse.json(
+      { 
+        error: error.message || 'Internal Server Error', 
+        telemetry: { duration_ms: Date.now() - startTime }
+      }, 
+      { status: error.status || 500 }
+    );
   }
 }
-
