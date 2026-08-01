@@ -1,3 +1,9 @@
+/**
+ * ARCHITECTURAL SYSTEM TYPES & DIAGNOSTIC CONTRACTS
+ * Role: Defines core game domain models and integrates system-wide diagnostic observability.
+ * Integration: Serves as the central type registry for the game engine and diagnostic gatekeepers.
+ */
+
 export enum GameMode {
   PVP = 'PVP', // Player vs Player local
   PVE = 'PVE', // Player vs Local Engine
@@ -58,40 +64,39 @@ export interface GameSettings {
   synthesizerVolume: number;
 }
 
+/**
+ * DIAGNOSTIC-AWARE ARCHITECTURE CONTRACTS
+ * Siphoned from AI_Agent_OS Diagnostic Engine
+ */
 
+export interface DiagnosticMetrics {
+  duration_ms: number;
+  timestamp: string;
+  thread_id?: string;
+}
 
+export interface DiagnosticReport {
+  status: 'HEALTHY' | 'CRITICAL_FAILURE' | 'ERROR';
+  timestamp: string;
+  checks: Record<string, { passed: boolean; duration_ms: number }>;
+  summary: {
+    total: number;
+    passed: number;
+    failed: number;
+    is_healthy: boolean;
+    pass_rate: number;
+  };
+  telemetry: DiagnosticMetrics;
+}
 
+export interface SystemDiagnosticState {
+  lastReport: DiagnosticReport | null;
+  isSystemReady: boolean;
+  kernelIntegrity: boolean;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export interface DiagnosticGatekeeperConfig {
+  strictMode: boolean;
+  autoRecovery: boolean;
+  logLevel: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+}
