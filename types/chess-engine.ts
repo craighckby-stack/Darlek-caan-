@@ -1,6 +1,8 @@
 /**
  * DALEK CAAN CHESS ENGINE - TYPE DEFINITIONS
- * Siphoned from unitary-core, psr-governance, and darlek-cann-v3
+ * Role: Core type definitions for the Chess Engine, integrated with system-wide diagnostic telemetry.
+ * Integration: Used by engine core, move validators, and heuristic evaluators.
+ * Siphoned from: unitary-core, psr-governance, and AI_Agent_OS diagnostic patterns.
  */
 
 export type PieceType = 'p' | 'r' | 'n' | 'b' | 'q' | 'k';
@@ -32,6 +34,7 @@ export interface HeuristicEvaluation {
   positionalScore: number;
   ethicalScore: number;
   chaosNoise?: number;
+  diagnosticMetadata?: EngineDiagnosticReport;
 }
 
 export type InterventionType = 
@@ -77,40 +80,23 @@ export interface SubscriptionTeardown {
   unsubscribe: () => void;
 }
 
+/**
+ * DIAGNOSTIC-AWARE INTERFACES
+ * Siphoned from AI_Agent_OS diagnostic_utils_core.py
+ */
 
+export interface EngineDiagnosticReport {
+  status: 'HEALTHY' | 'CRITICAL_FAILURE' | 'ERROR';
+  timestamp: string;
+  duration_ms: number;
+  telemetry: {
+    version: string;
+    thread_id: number;
+  };
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export interface EngineDiagnosticContext {
+  lastCheck: number;
+  healthStatus: 'HEALTHY' | 'DEGRADED';
+  updateStatus: (status: 'HEALTHY' | 'DEGRADED') => void;
+}
