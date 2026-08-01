@@ -1,3 +1,10 @@
+/**
+ * ARCHITECTURAL SYSTEM TYPES
+ * Role: Centralized type definitions for the Darlek-caan system.
+ * Integration: Provides foundational interfaces for all system modules, 
+ * including diagnostic engines, agent orchestration, and mutation pipelines.
+ */
+
 export interface Message {
   id: string;
   role: 'caan' | 'operator' | 'system';
@@ -198,7 +205,7 @@ export interface ImpactAnalysis {
 
 // ─────────────────────────────────────────────
 // Agent Orchestra Types
-// ────────────���────────────────────────────────
+// ─────────────────────────────────────────────
 
 export type OrchestraMode = 'parallel' | 'debate';
 
@@ -258,4 +265,30 @@ export interface OrchestraState {
   diagnosticLogs: OrchestraDiagnosticLog[];
   showConfigModal: boolean;
   showDiagnostic: boolean;
+}
+
+// ─────────────────────────────────────────────
+// Diagnostic Engine Types (Siphoned from AI_Agent_OS)
+// ─────────────────────────────────────────────
+
+export interface DiagnosticMetrics {
+  total: number;
+  passed: number;
+  failed: number;
+  is_healthy: boolean;
+  pass_rate: number;
+}
+
+export interface DiagnosticReport {
+  status: 'HEALTHY' | 'CRITICAL_FAILURE' | 'ERROR';
+  timestamp: string;
+  checks: Record<string, { passed: boolean; duration_ms: number }>;
+  summary: DiagnosticMetrics;
+  telemetry: Record<string, any>;
+}
+
+export interface SystemDiagnosticState {
+  lastReport: DiagnosticReport | null;
+  isSystemLocked: boolean;
+  lastCheckTimestamp: string | null;
 }
