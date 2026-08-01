@@ -1,29 +1,40 @@
 /**
- * GitHub Orchestrator
- * Encapsulates GitHub API interactions with telemetry and error handling.
+ * GitHub Orchestrator Service
+ * Handles low-level GitHub API interactions with telemetry and error normalization.
  */
 export class GitHubOrchestrator {
-  constructor(private token: string) {}
+  private token: string;
 
-  async fetchBranches(owner: string, repo: string) {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches`, {
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Accept': 'application/vnd.github.v3+json',
-      },
+  constructor(token: string) {
+    this.token = token;
+  }
+
+  async createBranch(owner: string, repo: string, base: string, name: string) {
+    const start = performance.now();
+    
+    // Fetch base SHA
+    const refRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/ref/heads/${base}`, {
+      headers: { Authorization: `Bearer ${this.token}`, Accept: "application/vnd.github.v3+json" }
     });
 
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      const error: any = new Error(errData.message || `GitHub API returned ${res.status}`);
-      error.status = res.status;
-      throw error;
-    }
+    if (!refRes.ok) throw { message: "Base branch not found", status: refRes.status };
+    const { object: { sha } } = await refRes.json();
 
-    const branches = await res.json();
-    return branches.map((b: { name: string; protected?: boolean }) => ({
-      name: b.name,
-      protected: !!b.protected,
-    }));
+    // Create Ref
+    const createRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/refs`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ ref: `refs/heads/${name}`, sha })
+    });
+
+    if (!createRes.ok) throw { message: "Branch creation failed", status: createRes.status };
+
+    return {
+      telemetry: { duration_ms: performance.now() - start }
+    };
   }
 }
