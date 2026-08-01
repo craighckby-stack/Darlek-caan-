@@ -1,3 +1,10 @@
+/**
+ * DARLEK CANN ARCHITECTURAL HEADER
+ * File: src/components/ChessBoard.tsx
+ * Role: Core system component participating in autonomous cognitive evolution cycles.
+ * Architecture: Type-safe modular unit with resilient state interfaces.
+ */
+
 import { useState, useEffect } from 'react';
 import { Chess, Square } from 'chess.js';
 import { motion, AnimatePresence } from 'motion/react';
