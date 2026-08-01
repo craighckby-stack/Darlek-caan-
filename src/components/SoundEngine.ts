@@ -1,3 +1,10 @@
+/**
+ * DARLEK CANN ARCHITECTURAL HEADER
+ * File: src/components/SoundEngine.ts
+ * Role: Core system component participating in autonomous cognitive evolution cycles.
+ * Architecture: Type-safe modular unit with resilient state interfaces.
+ */
+
 // Web Audio API Synthesizer for Dalek Caan Chess
 // Generates stylized digital and robotic sound effects dynamically with 0 asset overhead
 
