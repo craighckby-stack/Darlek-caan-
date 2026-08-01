@@ -1,30 +1,55 @@
 /**
- * FIREBASE CONFIG VALIDATOR
- * Role: Validates the integrity of the Firebase configuration object.
- * Integration: Called by firebase-applet-config.json during initialization.
+ * FIREBASE CONFIGURATION VALIDATOR
+ * Role: Logic for validating Firebase configuration objects and generating telemetry.
+ * Siphoned from AI_Agent_OS diagnostic patterns.
  */
 
 export interface ValidationResult {
   passed: boolean;
   message: string;
+  metadata?: Record<string, any>;
 }
 
+/**
+ * Validates the structure and content of a Firebase configuration object.
+ * @param config The configuration object to validate.
+ * @returns A ValidationResult indicating success or failure.
+ */
 export function validateFirebaseConfig(config: any): ValidationResult {
-  const requiredKeys = ['projectId', 'apiKey', 'appId'];
-  
-  for (const key of requiredKeys) {
-    if (!config[key] || config[key].trim() === '') {
-      return {
-        passed: false,
-        message: `Missing or empty required configuration key: ${key}`
-      };
+  const requiredFields = [
+    'projectId',
+    'appId',
+    'apiKey',
+    'authDomain',
+    'storageBucket',
+    'messagingSenderId'
+  ];
+
+  const missingFields = requiredFields.filter(field => !config[field]);
+
+  if (missingFields.length > 0) {
+    return {
+      passed: false,
+      message: `Missing required configuration fields: ${missingFields.join(', ')}`,
+      metadata: { missingFields, timestamp: new Date().toISOString() }
+    };
+  }
+
+  // Check for common placeholder patterns
+  if (config.apiKey.startsWith('AIza') && config.apiKey.length < 20) {
+    return {
+      passed: false,
+      message: "API Key appears to be truncated or malformed.",
+      metadata: { field: 'apiKey', length: config.apiKey.length }
+    };
+  }
+
+  return {
+    passed: true,
+    message: "Firebase configuration integrity verified.",
+    metadata: {
+      timestamp: new Date().toISOString(),
+      version: "1.0.0-CONFIG-AWARE"
     }
-  }
-
-  // Check for potential API key leakage or malformation
-  if (config.apiKey.length < 20) {
-    return { passed: false, message: "API Key appears malformed or truncated." };
-  }
-
-  return { passed: true, message: "Configuration integrity verified." };
+  };
 }
