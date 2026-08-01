@@ -1,69 +1,54 @@
+/**
+ * ARCHITECTURAL SERVICE: GitHub Branch Creation Orchestrator
+ * Role: Provides a diagnostic-aware interface for creating new git branches.
+ * Integration: Utilizes GitHubOrchestrator for API interaction and DiagnosticGatekeeper for health validation.
+ */
+
 import { NextRequest, NextResponse } from "next/server";
+import { GitHubOrchestrator } from "@/lib/github-orchestrator";
+import { DiagnosticGatekeeper } from "@/lib/diagnostic-gatekeeper";
 
 export async function POST(req: NextRequest) {
+  const gatekeeper = new DiagnosticGatekeeper();
+  
   try {
+    // 1. Validate environment health before execution
+    const health = await gatekeeper.verifySystemIntegrity();
+    if (!health.is_healthy) {
+      return NextResponse.json(
+        { error: "System health check failed", details: health },
+        { status: 503 }
+      );
+    }
+
     const body = await req.json();
     const { token, owner, repo, baseBranch, newBranch } = body;
 
     if (!token || !owner || !repo || !baseBranch || !newBranch) {
       return NextResponse.json(
-        { error: "token, owner, repo, baseBranch, and newBranch are required" },
+        { error: "Required parameters missing: token, owner, repo, baseBranch, newBranch" },
         { status: 400 }
       );
     }
 
-    // Get the SHA of the base branch
-    const refRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/git/ref/heads/${baseBranch}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-      }
+    // 2. Delegate to Orchestrator
+    const orchestrator = new GitHubOrchestrator(token);
+    const result = await orchestrator.createBranch(owner, repo, baseBranch, newBranch);
+
+    return NextResponse.json({
+      success: true,
+      branch: newBranch,
+      telemetry: result.telemetry
+    });
+
+  } catch (error: any) {
+    console.error("[GitHubOrchestrator] Branch creation failure:", error);
+    return NextResponse.json(
+      { 
+        error: error.message || "Internal Orchestration Error",
+        code: error.status || 500
+      }, 
+      { status: error.status || 500 }
     );
-
-    if (!refRes.ok) {
-      const errData = await refRes.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errData.message || `Failed to fetch base branch ref: ${refRes.status}` },
-        { status: refRes.status }
-      );
-    }
-
-    const refData = await refRes.json();
-    const sha = refData.object.sha;
-
-    // Create the new branch
-    const createRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/git/refs`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github.v3+json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ref: `refs/heads/${newBranch}`,
-          sha: sha,
-        }),
-      }
-    );
-
-    if (!createRes.ok) {
-      const errData = await createRes.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errData.message || `Failed to create branch: ${createRes.status}` },
-        { status: createRes.status }
-      );
-    }
-
-    return NextResponse.json({ success: true, branch: newBranch });
-  } catch (error) {
-    console.error("Create branch error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
-
