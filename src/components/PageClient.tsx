@@ -1,9 +1,31 @@
 'use client';
 
-import dynamic from 'next/dynamic';
+/**
+ * PageClient.tsx
+ * Role: Diagnostic-Aware entry point for the application.
+ * Integrates the Diagnostic Boundary to ensure system health monitoring 
+ * begins before the primary application UI (MainPage) is mounted.
+ */
 
-const MainPage = dynamic(() => import('@/components/MainPage'), { ssr: false });
+import dynamic from 'next/dynamic';
+import { useEffect } from 'react';
+import { initializeDiagnosticBoundary } from '@/lib/diagnostic-boundary';
+
+const MainPage = dynamic(() => import('@/components/MainPage'), { 
+  ssr: false,
+  loading: () => <div className="diagnostic-loading">Initializing System Kernel...</div>
+});
 
 export default function PageClient() {
-  return <MainPage />;
+  useEffect(() => {
+    // Initialize the diagnostic gatekeeper and telemetry context on mount
+    const cleanup = initializeDiagnosticBoundary();
+    return () => cleanup();
+  }, []);
+
+  return (
+    <main className="diagnostic-container">
+      <MainPage />
+    </main>
+  );
 }
