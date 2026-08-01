@@ -1,19 +1,26 @@
 /**
- * DIAGNOSTIC TYPES
- * Role: Standardized interfaces for system-wide observability and health monitoring.
+ * DIAGNOSTIC TYPE DEFINITIONS
+ * Role: Shared diagnostic interfaces siphoned from AI_Agent_OS.
  */
-
-export interface DiagnosticMetrics {
-  executionTimeMs: number;
-  memoryUsageBytes: number;
-  threadId: string | number;
-}
 
 export interface DiagnosticReport {
   status: 'HEALTHY' | 'CRITICAL_FAILURE' | 'ERROR';
   timestamp: string;
-  metrics: DiagnosticMetrics;
-  summary: Record<string, any>;
+  checks: Record<string, { passed: boolean; duration_ms: number }>;
+  summary: DiagnosticMetrics;
+  telemetry: Record<string, any>;
 }
 
-export type SystemDiagnosticState = 'idle' | 'monitoring' | 'recovering' | 'locked';
+export interface DiagnosticMetrics {
+  total: number;
+  passed: number;
+  failed: number;
+  is_healthy: boolean;
+  pass_rate: number;
+}
+
+export interface SystemDiagnosticState {
+  lastCheck: string;
+  healthScore: number;
+  activeAlerts: string[];
+}
