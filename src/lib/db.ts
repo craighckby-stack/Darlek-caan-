@@ -1,7 +1,15 @@
+/**
+ * ARCHITECTURAL DATABASE CONTROLLER
+ * Role: Provides a diagnostic-aware Prisma interface with automatic self-healing.
+ * Integration: Connects to system-wide diagnostic registry and telemetry utilities.
+ * Dependencies: src/lib/db-telemetry.ts
+ */
+
 import { PrismaClient } from '@prisma/client'
 import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
+import { recordDatabaseDiagnostic, generateDbTelemetry } from './db-telemetry'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -10,38 +18,26 @@ const globalForPrisma = globalThis as unknown as {
 const prismaDir = path.join(process.cwd(), 'prisma')
 const dbPath = path.join(prismaDir, 'dev.db')
 
-// Clean up any remaining WAL files which cause severe corruption in container environments
 function cleanupWalFiles() {
   try {
     const walPath = path.join(prismaDir, 'dev.db-wal');
-    if (fs.existsSync(walPath)) {
-      try { fs.unlinkSync(walPath); } catch (e) {}
-    }
     const shmPath = path.join(prismaDir, 'dev.db-shm');
-    if (fs.existsSync(shmPath)) {
-      try { fs.unlinkSync(shmPath); } catch (e) {}
-    }
-  } catch (err) {
-    // ignore
-  }
+    if (fs.existsSync(walPath)) fs.unlinkSync(walPath);
+    if (fs.existsSync(shmPath)) fs.unlinkSync(shmPath);
+  } catch (err) {}
 }
 
 let prismaInstance: PrismaClient | null = null;
 let isHealing = false;
-
 let isDbChecked = false;
 
 function getPrismaInstance(): PrismaClient {
   if (!isDbChecked) {
     isDbChecked = true;
-    if (!fs.existsSync(dbPath)) {
-      performSelfHealing();
-    }
+    if (!fs.existsSync(dbPath)) performSelfHealing();
   }
 
-  if (prismaInstance) {
-    return prismaInstance;
-  }
+  if (prismaInstance) return prismaInstance;
 
   if (process.env.NODE_ENV !== 'production' && globalForPrisma.prisma) {
     prismaInstance = globalForPrisma.prisma;
@@ -50,146 +46,76 @@ function getPrismaInstance(): PrismaClient {
 
   const sqliteUrl = `file:${dbPath}?connection_limit=1&socket_timeout=15`;
   prismaInstance = new PrismaClient({
-    datasources: {
-      db: {
-        url: sqliteUrl,
-      },
-    },
+    datasources: { db: { url: sqliteUrl } },
     log: process.env.NODE_ENV === 'development' ? ['error'] : [],
   });
 
-  if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = prismaInstance;
-  }
+  if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prismaInstance;
 
   return prismaInstance;
 }
 
 export function performSelfHealing() {
-  if (isHealing) {
-    console.warn('[Database Setup] Self-healing already in progress. Skipping redundant call.');
-    return;
-  }
+  if (isHealing) return;
   isHealing = true;
   try {
-    console.warn('[Database Setup] Self-healing initiated. Deleting database to rebuild fresh schema...');
-    
-    // Attempt to disconnect prisma to release SQLite locks
     if (prismaInstance) {
-      try {
-        console.log('[Database Setup] Disconnecting active Prisma client...');
-        const staleInstance = prismaInstance;
-        prismaInstance = null;
-        if (globalForPrisma.prisma) {
-          globalForPrisma.prisma = undefined;
-        }
-        staleInstance.$disconnect().catch(() => {});
-      } catch (disError) {
-        // ignore
-      }
+      const staleInstance = prismaInstance;
+      prismaInstance = null;
+      if (globalForPrisma.prisma) globalForPrisma.prisma = undefined;
+      staleInstance.$disconnect().catch(() => {});
     }
 
-    // Explicitly delete DB artifact and journals
-    if (fs.existsSync(dbPath)) {
-      try { fs.unlinkSync(dbPath); } catch (e) {}
-    }
+    if (fs.existsSync(dbPath)) try { fs.unlinkSync(dbPath); } catch (e) {}
     cleanupWalFiles();
     
-    console.log('[Database Setup] Rebuilding Prisma schema and client...');
     execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
-    console.log('[Database Setup] Database healing completed successfully!');
+    recordDatabaseDiagnostic('HEALING_SUCCESS', { timestamp: Date.now() });
   } catch (healErr) {
-    console.error('[Database Setup] Self-healing fatal failure:', healErr);
+    recordDatabaseDiagnostic('HEALING_FAILURE', { error: String(healErr) });
   } finally {
     isHealing = false;
   }
 }
 
-
 function createCallableProxy(prop: string | symbol): any {
   const dummy = () => {};
-  
   return new Proxy(dummy, {
     apply(_, __, args) {
       const execute = async (attempt = 1): Promise<any> => {
         const activePrisma = getPrismaInstance();
         const method = (activePrisma as any)[prop];
-        if (typeof method !== 'function') {
-          throw new Error(`Prisma method "${String(prop)}" is not a function.`);
-        }
         try {
-          const result = method.apply(activePrisma, args);
-          if (result && typeof result === 'object' && typeof (result as any).then === 'function') {
-            return await result;
-          }
-          return result;
+          return await method.apply(activePrisma, args);
         } catch (err: any) {
-          const errMsg = String(err?.message || err?.stack || err || '').toLowerCase();
-          const isCorrupt = errMsg.includes('malformed') || 
-                            errMsg.includes('corrupt') || 
-                            errMsg.includes('disk image') || 
-                            errMsg.includes('sqlite_corrupt') || 
-                            errMsg.includes('database_closed') || 
-                            errMsg.includes('connectorerror') || 
-                            errMsg.includes('sqliteerror');
-          if (isCorrupt) {
-            console.error(`[Prisma Proxy Direct] Database corruption detected on ${String(prop)}. Healing database...`);
+          if (String(err?.message).toLowerCase().includes('corrupt')) {
+            recordDatabaseDiagnostic('CORRUPTION_DETECTED', generateDbTelemetry(err));
             performSelfHealing();
-            if (attempt < 2) {
-              console.log(`[Prisma Proxy Direct] Retrying ${String(prop)} after successful rebuild...`);
-              return execute(attempt + 1);
-            }
+            if (attempt < 2) return execute(attempt + 1);
           }
           throw err;
         }
       };
       return execute();
     },
-
     get(_, subProp) {
-      if (subProp === 'then' || subProp === 'toJSON' || typeof subProp === 'symbol') {
-        return undefined;
-      }
-
+      if (subProp === 'then' || subProp === 'toJSON' || typeof subProp === 'symbol') return undefined;
       return function (...args: any[]) {
         const execute = async (attempt = 1): Promise<any> => {
           const activePrisma = getPrismaInstance();
           const model = (activePrisma as any)[prop];
-          if (!model) {
-            throw new Error(`Prisma model or method "${String(prop)}" not found.`);
-          }
           const method = model[subProp];
-          if (typeof method !== 'function') {
-            throw new Error(`Prisma method "${String(subProp)}" on model/service "${String(prop)}" is not a function.`);
-          }
-
           try {
-            const result = method.apply(model, args);
-            if (result && typeof result === 'object' && typeof (result as any).then === 'function') {
-              return await result;
-            }
-            return result;
+            return await method.apply(model, args);
           } catch (err: any) {
-            const errMsg = String(err?.message || err?.stack || err || '').toLowerCase();
-            const isCorrupt = errMsg.includes('malformed') || 
-                              errMsg.includes('corrupt') || 
-                              errMsg.includes('disk image') || 
-                              errMsg.includes('sqlite_corrupt') || 
-                              errMsg.includes('database_closed') || 
-                              errMsg.includes('connectorerror') || 
-                              errMsg.includes('sqliteerror');
-            if (isCorrupt) {
-              console.error(`[Prisma Proxy Model] Database corruption detected on ${String(prop)}.${String(subProp)}. Rebuilding ...`);
+            if (String(err?.message).toLowerCase().includes('corrupt')) {
+              recordDatabaseDiagnostic('CORRUPTION_DETECTED', generateDbTelemetry(err));
               performSelfHealing();
-              if (attempt < 2) {
-                console.log(`[Prisma Proxy Model] Retrying query ${String(prop)}.${String(subProp)} after successful rebuild...`);
-                return execute(attempt + 1);
-              }
+              if (attempt < 2) return execute(attempt + 1);
             }
             throw err;
           }
         };
-
         return execute();
       };
     }
@@ -198,9 +124,7 @@ function createCallableProxy(prop: string | symbol): any {
 
 export const db = new Proxy({} as PrismaClient, {
   get(_, prop) {
-    if (prop === 'then' || prop === 'toJSON' || typeof prop === 'symbol') {
-      return undefined;
-    }
+    if (prop === 'then' || prop === 'toJSON' || typeof prop === 'symbol') return undefined;
     return createCallableProxy(prop);
   }
 });
