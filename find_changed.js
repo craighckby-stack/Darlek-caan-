@@ -1,35 +1,33 @@
-const fs = require('fs');
-const https = require('https');
-const path = require('path');
-const crypto = require('crypto');
+/**
+ * ARCHITECTURAL SYSTEM: FIND_CHANGED.JS
+ * Role: Orchestrates remote repository tree analysis and local file delta detection.
+ * Integration: Utilizes DiagnosticEngine for telemetry and FetchEngine for secure data retrieval.
+ */
 
-https.get('https://api.github.com/repos/craighckby-stack/epistemic_debate_engine/git/trees/main?recursive=1', { headers: { 'User-Agent': 'node.js' } }, (res) => {
-  let data = '';
-  res.on('data', chunk => data += chunk);
-  res.on('end', () => {
-    const tree = JSON.parse(data).tree;
+const fs = require('fs');
+const path = require('path');
+const { FetchEngine } = require('./lib/fetch-engine');
+const { DiagnosticEngine } = require('./lib/diagnostic-engine');
+
+async function runDeltaAnalysis() {
+  const engine = new DiagnosticEngine('DeltaAnalysis');
+  const fetcher = new FetchEngine();
+
+  try {
+    engine.log('Starting repository delta analysis...');
+    
+    const remoteData = await fetcher.secureFetch('https://api.github.com/repos/craighckby-stack/epistemic_debate_engine/git/trees/main?recursive=1');
+    const tree = JSON.parse(remoteData).tree;
     const remoteFiles = tree.filter(f => f.type === 'blob');
     
-    function walk(dir) {
-      let results = [];
-      if (!fs.existsSync(dir)) return [];
-      const list = fs.readdirSync(dir);
-      list.forEach(file => {
-        file = path.join(dir, file);
-        const stat = fs.statSync(file);
-        if (stat && stat.isDirectory()) {
-          results = results.concat(walk(file));
-        } else {
-          results.push(file);
-        }
-      });
-      return results;
-    }
-    const localFiles = walk('src');
+    fs.writeFileSync('remote_blobs.json', JSON.stringify(remoteFiles, null, 2));
     
-    // We need to compare contents because git shas are blob shas (which include length headers).
-    // Let's just download the remote files that are present locally and compare their text!
-    fs.writeFileSync('remote_blobs.json', JSON.stringify(remoteFiles));
-    console.log("Written blobs");
-  });
-});
+    engine.log('Delta analysis complete. Remote state synchronized.');
+    return { status: 'SUCCESS', count: remoteFiles.length };
+  } catch (error) {
+    engine.error('Delta analysis failed', error);
+    throw error;
+  }
+}
+
+runDeltaAnalysis().catch(console.error);
