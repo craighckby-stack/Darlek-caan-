@@ -1,3 +1,11 @@
+/* 
+ * ARCHITECTURAL SYSTEM STYLING ENGINE
+ * Role: Global CSS foundation for the Darlek-caan system. 
+ * Integration: Provides diagnostic-aware CSS variables and global theme overrides 
+ * that react to system health states defined in src/core/types.ts and monitored 
+ * by the DiagnosticEngine.
+ */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
@@ -5,9 +13,18 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  /* Diagnostic-Aware System Variables */
+  --color-diag-healthy: #22c55e;
+  --color-diag-degraded: #eab308;
+  --color-diag-critical: #ef4444;
 }
 
 @layer base {
+  :root {
+    --sys-health-status: var(--color-diag-healthy);
+  }
+
   body {
     background-color: #030303;
     color: #e5e5e5;
@@ -15,6 +32,17 @@
       radial-gradient(circle at 15% 50%, rgba(100, 50, 255, 0.05), transparent 25%),
       radial-gradient(circle at 85% 30%, rgba(0, 200, 255, 0.03), transparent 25%);
     background-attachment: fixed;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Diagnostic Pulse Animation for Telemetry Monitoring */
+  @keyframes diagnostic-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .diag-pulse {
+    animation: diagnostic-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
 
@@ -23,41 +51,3 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
